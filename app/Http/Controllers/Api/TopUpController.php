@@ -13,7 +13,7 @@ class TopUpController extends Controller
     public function store(TopUpRequest $request)
     {
         $data = $request->validated();
-        $user = User::find(1); // tetap menggunakan simulasi user ID 1
+        $user = $request->user();
 
         return DB::transaction(function () use ($user, $data) {
             $user->increment('balance', $data['amount']);

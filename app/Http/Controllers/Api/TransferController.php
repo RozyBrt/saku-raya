@@ -15,7 +15,7 @@ class TransferController extends Controller
         $data = $request->validated();
         
         // Simulasi: Kita anggap yang lagi login itu User ID 1
-        $sender = User::find(1);
+        $sender = $request->user();
 
         // 1. Cek Saldo dulu, bray. Gak ada saldo = Gak ada transfer.
         if ($sender->balance < $data['amount']) {
