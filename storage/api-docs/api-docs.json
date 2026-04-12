@@ -1,0 +1,71 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Saku Raya API",
+        "description": "API untuk Aplikasi Saku Raya",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost",
+            "description": "Local Server"
+        }
+    ],
+    "paths": {
+        "/api/check-status": {
+            "get": {
+                "tags": [
+                    "Status"
+                ],
+                "summary": "Check API Status",
+                "operationId": "f568ed589239df28faf8dbdfa604987a",
+                "responses": {
+                    "200": {
+                        "description": "API is working",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string"
+                                        },
+                                        "project": {
+                                            "type": "string"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "db_connection": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "bearerFormat": "JWT",
+                "scheme": "bearer"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Status",
+            "description": "Status"
+        }
+    ]
+}
