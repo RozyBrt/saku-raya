@@ -5,9 +5,42 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Transfer;
+use OpenApi\Attributes as OA;
 
 class TransactionController extends Controller
 {
+    #[OA\Get(
+        path: '/api/transactions',
+        summary: 'Get Transaction History',
+        tags: ['Transactions'],
+        security: [['bearerAuth' => []]],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Transaction history retrieved successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string'),
+                        new OA\Property(
+                            property: 'data',
+                            type: 'array',
+                            items: new OA\Items(
+                                properties: [
+                                    new OA\Property(property: 'id', type: 'integer'),
+                                    new OA\Property(property: 'type', type: 'string', enum: ['IN', 'OUT']),
+                                    new OA\Property(property: 'amount', type: 'number'),
+                                    new OA\Property(property: 'note', type: 'string'),
+                                    new OA\Property(property: 'date', type: 'string'),
+                                    new OA\Property(property: 'counterparty', type: 'integer'),
+                                ],
+                                type: 'object'
+                            )
+                        ),
+                    ]
+                )
+            ),
+        ]
+    )]
     public function index(Request $request)
     {
         $user = $request->user();
