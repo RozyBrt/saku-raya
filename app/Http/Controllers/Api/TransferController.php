@@ -21,7 +21,7 @@ class TransferController extends Controller
             content: new OA\JsonContent(
                 required: ['recipient_account', 'amount'],
                 properties: [
-                    new OA\Property(property: 'recipient_account', type: 'string', example: 'receiver@example.com'),
+                    new OA\Property(property: 'recipient_account', type: 'string', example: 'penerima@saku.raya'),
                     new OA\Property(property: 'amount', type: 'number', example: 50000),
                 ]
             )

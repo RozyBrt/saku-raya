@@ -32,12 +32,12 @@
                                     "email": {
                                         "type": "string",
                                         "format": "email",
-                                        "example": "user@example.com"
+                                        "example": "test@example.com"
                                     },
                                     "password": {
                                         "type": "string",
                                         "format": "password",
-                                        "example": "password123"
+                                        "example": "password"
                                     }
                                 },
                                 "type": "object"
@@ -186,8 +186,42 @@
                 "tags": [
                     "Transactions"
                 ],
-                "summary": "Get Transaction History",
+                "summary": "Get Transaction History with Filters & Pagination",
                 "operationId": "9b50e29e364179ebde24ac5fc59cd442",
+                "parameters": [
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "description": "Filter by transaction type (IN/OUT)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "IN",
+                                "OUT"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search by counterparty name or email",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number for pagination",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Transaction history retrieved successfully",
@@ -227,6 +261,18 @@
                                                 },
                                                 "type": "object"
                                             }
+                                        },
+                                        "current_page": {
+                                            "type": "integer"
+                                        },
+                                        "last_page": {
+                                            "type": "integer"
+                                        },
+                                        "per_page": {
+                                            "type": "integer"
+                                        },
+                                        "total": {
+                                            "type": "integer"
                                         }
                                     },
                                     "type": "object"
@@ -261,7 +307,7 @@
                                 "properties": {
                                     "recipient_account": {
                                         "type": "string",
-                                        "example": "receiver@example.com"
+                                        "example": "penerima@saku.raya"
                                     },
                                     "amount": {
                                         "type": "number",

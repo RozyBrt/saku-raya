@@ -11,9 +11,32 @@ class TransactionController extends Controller
 {
     #[OA\Get(
         path: '/api/transactions',
-        summary: 'Get Transaction History',
+        summary: 'Get Transaction History with Filters & Pagination',
         tags: ['Transactions'],
         security: [['bearerAuth' => []]],
+        parameters: [
+            new OA\Parameter(
+                name: 'type',
+                in: 'query',
+                description: 'Filter by transaction type (IN/OUT)',
+                required: false,
+                schema: new OA\Schema(type: 'string', enum: ['IN', 'OUT'])
+            ),
+            new OA\Parameter(
+                name: 'search',
+                in: 'query',
+                description: 'Search by counterparty name or email',
+                required: false,
+                schema: new OA\Schema(type: 'string')
+            ),
+            new OA\Parameter(
+                name: 'page',
+                in: 'query',
+                description: 'Page number for pagination',
+                required: false,
+                schema: new OA\Schema(type: 'integer', default: 1)
+            ),
+        ],
         responses: [
             new OA\Response(
                 response: 200,
@@ -36,6 +59,10 @@ class TransactionController extends Controller
                                 type: 'object'
                             )
                         ),
+                        new OA\Property(property: 'current_page', type: 'integer'),
+                        new OA\Property(property: 'last_page', type: 'integer'),
+                        new OA\Property(property: 'per_page', type: 'integer'),
+                        new OA\Property(property: 'total', type: 'integer'),
                     ]
                 )
             ),
@@ -45,24 +72,64 @@ class TransactionController extends Controller
     {
         $user = $request->user();
 
-        // Ambil semua transaksi dimana user adalah pengirim ATAU penerima
-        $transactions = Transfer::where('sender_id', $user->id)
-            ->orWhere('recipient_account', $user->id)
-            ->orderBy('created_at', 'desc')
-            ->get();
+        // Build query dengan filter dan search
+        $query = Transfer::where(function($q) use ($user) {
+            $q->where('sender_id', $user->id)
+              ->orWhere('recipient_account', $user->id);
+        });
+
+        // Filter berdasarkan type (IN/OUT)
+        if ($request->has('type') && in_array($request->type, ['IN', 'OUT'])) {
+            if ($request->type === 'OUT') {
+                $query->where('sender_id', $user->id);
+            } else {
+                $query->where('recipient_account', $user->id);
+            }
+        }
+
+        // Search berdasarkan counterparty (nama/email)
+        if ($request->has('search') && !empty($request->search)) {
+            $search = $request->search;
+            $query->where(function($q) use ($user, $search) {
+                // Untuk transaksi OUT: cari di recipient_account
+                $q->where(function($subQ) use ($user, $search) {
+                    $subQ->where('sender_id', $user->id)
+                         ->where('recipient_account', 'LIKE', "%{$search}%");
+                })
+                // Untuk transaksi IN: cari di sender_id (yang merupakan user ID)
+                ->orWhere(function($subQ) use ($user, $search) {
+                    $subQ->where('recipient_account', $user->id)
+                         ->whereHas('sender', function($senderQ) use ($search) {
+                             $senderQ->where('name', 'LIKE', "%{$search}%")
+                                    ->orWhere('email', 'LIKE', "%{$search}%");
+                         });
+                });
+            });
+        }
+
+        // Pagination dengan 15 item per page
+        $transactions = $query->orderBy('created_at', 'desc')
+                              ->paginate(15);
+
+        // Transform data
+        $transformedData = $transactions->getCollection()->map(function($trx) use ($user) {
+            return [
+                'id' => $trx->id,
+                'type' => $trx->sender_id == $user->id ? 'OUT' : 'IN',
+                'amount' => $trx->amount,
+                'note' => $trx->note,
+                'date' => $trx->created_at->format('d M Y H:i'),
+                'counterparty' => $trx->sender_id == $user->id ? $trx->recipient_account : $trx->sender_id
+            ];
+        });
 
         return response()->json([
             'status' => 'success',
-            'data' => $transactions->map(function($trx) use ($user) {
-                return [
-                    'id' => $trx->id,
-                    'type' => $trx->sender_id == $user->id ? 'OUT' : 'IN',
-                    'amount' => $trx->amount,
-                    'note' => $trx->note,
-                    'date' => $trx->created_at->format('d M Y H:i'),
-                    'counterparty' => $trx->sender_id == $user->id ? $trx->recipient_account : $trx->sender_id
-                ];
-            })
+            'data' => $transformedData,
+            'current_page' => $transactions->currentPage(),
+            'last_page' => $transactions->lastPage(),
+            'per_page' => $transactions->perPage(),
+            'total' => $transactions->total(),
         ]);
     }
 }
