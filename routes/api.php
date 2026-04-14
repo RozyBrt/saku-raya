@@ -18,9 +18,9 @@ Route::middleware('auth:sanctum')->group(function () {
         $user = $request->user();
         return Cache::remember("user_profile_{$user->id}", 60, function () use ($user) {
             return $user->getAttributes(); // Ambil data mentah dari DB sebagai array murni
+        });
     });
-});
-    
+
     Route::get('/check-status', [StatusController::class, 'check']);
     Route::post('/transfer', [TransferController::class, 'store']);
     Route::post('/top-up', [TopUpController::class, 'store']);

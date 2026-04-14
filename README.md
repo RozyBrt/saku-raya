@@ -32,6 +32,7 @@ Di sana kamu bisa melihat semua endpoint, payload request, dan mencoba API langs
 | :--- | :--- | :--- | :--- |
 | `POST` | `/api/login` | No | Login dan dapatkan access token |
 | `GET` | `/api/user` | Yes | Ambil profil user yang sedang login |
+| `GET` | `/api/check-status` | Yes | Cek status API / koneksi user |
 | `POST` | `/api/top-up` | Yes | Tambah saldo akun sendiri |
 | `POST` | `/api/transfer` | Yes | Transfer antar user menggunakan `recipient_account` |
 | `GET` | `/api/transactions` | Yes | Ambil riwayat transaksi user |
