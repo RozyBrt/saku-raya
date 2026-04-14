@@ -7,9 +7,50 @@ use App\Http\Requests\TransferRequest;
 use App\Models\Transfer;
 use App\Models\User;
 use Illuminate\Support\Facades\DB; // Wajib ada buat transaksi bray!
+use OpenApi\Attributes as OA;
 
 class TransferController extends Controller
 {
+    #[OA\Post(
+        path: '/api/transfer',
+        summary: 'Kirim transfer ke pengguna lain',
+        tags: ['Transactions'],
+        security: [['bearerAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['recipient_account', 'amount'],
+                properties: [
+                    new OA\Property(property: 'recipient_account', type: 'string', example: 'receiver@example.com'),
+                    new OA\Property(property: 'amount', type: 'number', example: 50000),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 201,
+                description: 'Transfer berhasil',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string'),
+                        new OA\Property(property: 'message', type: 'string'),
+                        new OA\Property(property: 'remaining_balance', type: 'number'),
+                        new OA\Property(property: 'details', type: 'object'),
+                    ]
+                )
+            ),
+            new OA\Response(
+                response: 400,
+                description: 'Transfer gagal',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string'),
+                        new OA\Property(property: 'message', type: 'string'),
+                    ]
+                )
+            ),
+        ]
+    )]
     public function store(TransferRequest $request)
     {
         $data = $request->validated();
@@ -28,8 +69,14 @@ class TransferController extends Controller
         // 2. Jalankan Transaksi Database
         try {
             return DB::transaction(function () use ($sender, $data) {
+                // Cari penerima berdasarkan email
+                $recipient = User::where('email', $data['recipient_account'])->first();
+
                 // Potong Saldo si Pengirim
                 $sender->decrement('balance', $data['amount']);
+
+                // Tambah Saldo si Penerima
+                $recipient->increment('balance', $data['amount']);
 
                 // Catat di Tabel Transfers
                 $transfer = Transfer::create([

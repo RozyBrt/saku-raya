@@ -24,8 +24,8 @@ class TransferRequest extends FormRequest
     {
         return [
             //  Rules nya ada di sini
-            'amount' => 'required|numeric|min:10000',
-            'recipient_account' => 'required|exists:users,id',
+            'amount' => 'required|numeric|min:1',
+            'recipient_account' => 'required|exists:users,email',
             'note' => 'nullable|string|max:100'
         ];
     }
